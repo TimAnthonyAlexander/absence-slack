@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 error_reporting(E_ALL & ~E_DEPRECATED);
 
@@ -9,10 +9,10 @@ use GuzzleHttp\Client as Guzzle;
 use Dotenv\Dotenv;
 
 // Load allowed names from external file
-$allowedNames = require __DIR__ . '/allowed_names.php';
+$allowedNames = require __DIR__ . '/../allowed_names.php';
 
 // Load environment variables from .env file
-$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
 // Get credentials from environment
