@@ -44,4 +44,5 @@ class Config
     {
         return $this->allowedNames;
     }
-} 
+}
+

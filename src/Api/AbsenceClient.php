@@ -20,7 +20,7 @@ class AbsenceClient
         $this->httpClient = new Guzzle(['http_errors' => false]);
     }
 
-    public function fetchAbsences(string $startDate, string $endDate, int $limit = 500): array
+    public function fetchAbsences(string $startDate, string $endDate, int $limit = 5000): array
     {
         $payload = [
             'skip'   => 0,
@@ -33,14 +33,14 @@ class AbsenceClient
         ];
 
         $response = $this->makeRequest('/absences', 'POST', $payload);
-        
+
         return $response['data'] ?? [];
     }
 
     private function makeRequest(string $endpoint, string $method, array $payload): array
     {
         $body = json_encode($payload, JSON_UNESCAPED_SLASHES);
-        
+
         $credentials = new Credentials($this->apiKey, 'sha256', $this->apiId);
         $hawk = ClientBuilder::create()->build();
         $header = $hawk->createRequest(
@@ -64,4 +64,4 @@ class AbsenceClient
 
         return json_decode($response->getBody(), true) ?? [];
     }
-} 
+}
