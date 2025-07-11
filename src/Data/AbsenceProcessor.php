@@ -73,16 +73,18 @@ class AbsenceProcessor
                 $return .= " - ended " . $interval->format('%a Tage her');
             }
         } else {
-            /*
-            $diff = $startDate->diff($requestEnd);
-
-            if ($diff->invert === 0) {
-                $days = $diff->days + 1; // Include the end date
-                $return .= " - " . $days . " Tage Urlaub";
+            // Calculate how many days of the vacation are within the request period
+            $vacationEndDate = new \DateTime($absence['end']);
+            $overlapStart = $startDate; // Vacation starts after request start
+            $overlapEnd = min($vacationEndDate, $requestEnd);
+            
+            if ($overlapEnd >= $overlapStart) {
+                $interval = $overlapStart->diff($overlapEnd);
+                $overlapDays = $interval->days;
+                $return .= " - " . $overlapDays . " Tage im angefragten Zeitraum";
             } else {
-                $return .= " - ended " . $diff->format('%a Tage her');
+                $return .= " - kein Überlapp mit angefragtem Zeitraum";
             }
-            */
         }
 
         return $return;
