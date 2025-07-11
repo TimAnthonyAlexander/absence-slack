@@ -49,44 +49,51 @@ class AbsenceProcessor
 
     public function formatAbsence(array $absence, string $requestStart, string $requestEnd): string
     {
-        $requestStart = new \DateTime($requestStart);
-        $requestEnd = new \DateTime($requestEnd);
-        $startDate = new \DateTime($absence['start']);
-        $endDate = new \DateTime($absence['end']);
-        $startDateFormatted = $startDate->format('d.m.Y');
-        $endDateFormatted = $endDate->modify('-1 day')->format('d.m.Y');
-
-        $return = "{$absence['name']}: {$startDateFormatted} bis {$endDateFormatted}";
-
-        if ($requestStart >= $startDate) {
-            // Calculate how much is left til end date
-            $endDate = new \DateTime($absence['end']);
-
-            $interval = $requestStart->diff($endDate);
-            if ($interval->invert === 0) {
-                $return .= " - " . $interval->format('%a Tage Urlaub übrig');
-
-                if ($interval->days >= 5) {
-                    $return .= " (ganze nächste Woche)";
+        // Convert string dates to DateTime objects
+        $requestStartDate = new \DateTime($requestStart);
+        $requestEndDate = new \DateTime($requestEnd);
+        $absenceStartDate = new \DateTime($absence['start']);
+        $absenceEndDate = new \DateTime($absence['end']);
+        
+        // Format the date range for display (end date is exclusive)
+        $displayStartDate = $absenceStartDate->format('d.m.Y');
+        $displayEndDate = (clone $absenceEndDate)->modify('-1 day')->format('d.m.Y');
+        
+        // Basic absence information
+        $result = sprintf("%s: %s bis %s", $absence['name'], $displayStartDate, $displayEndDate);
+        
+        if ($requestStartDate >= $absenceStartDate) {
+            // Case: Absence has already started by request date
+            // Calculate remaining vacation days
+            $daysRemaining = $requestStartDate->diff($absenceEndDate);
+            
+            if ($daysRemaining->invert === 0) {
+                // Absence is still ongoing
+                $result .= sprintf(" - %s Tage Urlaub übrig", $daysRemaining->format('%a'));
+                
+                if ($daysRemaining->days >= 5) {
+                    $result .= " (ganze nächste Woche)";
                 }
             } else {
-                $return .= " - ended " . $interval->format('%a Tage her');
+                // Absence has already ended
+                $result .= sprintf(" - ended %s Tage her", $daysRemaining->format('%a'));
             }
         } else {
-            // Calculate how many days of the vacation are within the request period
-            $vacationEndDate = new \DateTime($absence['end']);
-            $overlapStart = $startDate; // Vacation starts after request start
-            $overlapEnd = min($vacationEndDate, $requestEnd);
+            // Case: Absence starts after request date
+            // Calculate overlap between absence and request period
+            $overlapStart = $absenceStartDate;
+            $overlapEnd = min($absenceEndDate, $requestEndDate);
             
             if ($overlapEnd >= $overlapStart) {
-                $interval = $overlapStart->diff($overlapEnd);
-                $overlapDays = $interval->days;
-                $return .= " - " . $overlapDays . " Tage im angefragten Zeitraum";
+                // There is an overlap
+                $overlapDays = $overlapStart->diff($overlapEnd)->days;
+                $result .= sprintf(" - %d Tage im angefragten Zeitraum", $overlapDays);
             } else {
-                $return .= " - kein Überlapp mit angefragtem Zeitraum";
+                // No overlap
+                $result .= " - kein Überlapp mit angefragtem Zeitraum";
             }
         }
-
-        return $return;
+        
+        return $result;
     }
 }
