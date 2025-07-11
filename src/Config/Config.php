@@ -19,7 +19,6 @@ class Config
         $this->config = [
             'apiId' => $_ENV['API_ID'],
             'apiKey' => $_ENV['API_KEY'],
-            'teamId' => $_ENV['TEAM_ID'],
             'filterReasonId' => $_ENV['FILTER_REASON_ID'] ?? '60daf6bab5dc1f0a17142ab4',
             'botToken' => $_ENV['SLACK_BOT_TOKEN'] ?? null,
             'slackChannelId' => $_ENV['SLACK_CHANNEL_ID'] ?? 'C095S8BQHJ5',
