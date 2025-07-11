@@ -64,8 +64,6 @@ class CheckVacationDaysCommand
 
                     $vacationDays[$fullName] = $totalAllowance;
                 }
-            } else {
-                print "  {$firstName} {$lastName} has no vacation data available." . PHP_EOL;
             }
         }
 
@@ -126,4 +124,3 @@ class CheckVacationDaysCommand
         echo "{$colors['bold']}{$footerPadding} {$colors['magenta']}{$footerText}{$colors['reset']}" . PHP_EOL . PHP_EOL;
     }
 }
-

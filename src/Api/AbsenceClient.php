@@ -62,7 +62,6 @@ class AbsenceClient
 
     public function fetchAbsencesByName(string $firstName, string $lastName, string $startDate, string $endDate, int $limit = 5000): array
     {
-        print "Trying to fetch absences for {$firstName}.,{$lastName} from {$startDate} to {$endDate}..." . PHP_EOL;
         $ids = $this->fetchUserIdsByName($firstName, $lastName);
 
         if (empty($ids)) {
