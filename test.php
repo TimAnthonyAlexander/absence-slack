@@ -19,6 +19,7 @@ $dotenv->load();
 $apiId  = $_ENV['API_ID'];
 $apiKey = $_ENV['API_KEY'];
 $teamId = $_ENV['TEAM_ID'];
+$filterReasonId = $_ENV['FILTER_REASON_ID'] ?? '60daf6bab5dc1f0a17142ab4'; // Default value if not set
 
 // Handle command line arguments
 $startDate = '2025-07-10';
@@ -83,6 +84,10 @@ foreach ($data as $entry) {
     if (!isset($entry['assignedTo'])) continue;
     $name = $entry['assignedTo']['firstName'] . ' ' . $entry['assignedTo']['lastName'];
     if (!in_array($name, $allowedNames)) continue;
+
+    if (($entry['reasonId'] ?? '') === $filterReasonId) {
+        continue;
+    }
 
     $start = substr($entry['start'], 0, 10);
     $end = substr($entry['end'], 0, 10);
