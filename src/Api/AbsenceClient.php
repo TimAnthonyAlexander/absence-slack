@@ -26,8 +26,8 @@ class AbsenceClient
             'skip'   => 0,
             'limit'  => $limit,
             'filter' => [
-                'start' => ['$gte' => $startDate . 'T23:59:59.999Z'],
-                'end'   => ['$lte' => $endDate . 'T00:00:00.000Z'],
+                'start' => ['$lte' => $endDate . 'T23:59:59.999Z'],
+                'end'   => ['$gte' => $startDate . 'T00:00:00.000Z'],
             ],
             'relations' => ['assignedToId']
         ];
