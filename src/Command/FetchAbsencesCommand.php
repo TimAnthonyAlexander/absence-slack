@@ -30,12 +30,6 @@ class FetchAbsencesCommand
             $this->config->get('apiKey')
         );
 
-        // Initialize data processor
-        $this->processor = new AbsenceProcessor(
-            $this->config->getAllowedNames(),
-            $this->config->get('filterReasonId')
-        );
-
         // Initialize Slack notifier if enabled
         if ($this->config->isSlackEnabled()) {
             $this->slackNotifier = new SlackNotifier(
@@ -47,21 +41,37 @@ class FetchAbsencesCommand
 
     public function execute(): void
     {
-        // Fetch absences from the API
-        $absences = $this->client->fetchAbsences(
-            $this->args->getStartDate(),
-            $this->args->getEndDate()
-        );
+        $start = $this->args->getStartDate();
+        $end = $this->args->getEndDate();
+
+        $firstName = $this->args->getFirstName();
+        $lastName = $this->args->getLastName();
+
+        $allowedNames = $this->config->getAllowedNames();
+        if ($firstName && $lastName) {
+            $fullName = $firstName . ' ' . $lastName;
+            if (!in_array($fullName, $allowedNames)) {
+                $allowedNames[] = $fullName;
+            }
+        }
+        $this->processor = new AbsenceProcessor($allowedNames, $this->config->get('filterReasonId'));
+
+        // Fetch absences
+        if ($firstName && $lastName) {
+            $absences = $this->client->fetchAbsencesByName($firstName, $lastName, $start, $end);
+        } else {
+            $absences = $this->client->fetchAbsences($start, $end);
+        }
 
         // Process and filter the data
         $processedAbsences = $this->processor->processAbsences($absences);
 
         // Output the results
-        $this->outputResults($processedAbsences, $this->args->getStartDate(), $this->args->getEndDate());
+        $this->outputResults($processedAbsences, $start, $end);
 
         // Send to Slack if enabled
         if ($this->slackNotifier) {
-            $this->sendToSlack($processedAbsences, $this->args->getStartDate(), $this->args->getEndDate());
+            $this->sendToSlack($processedAbsences, $start, $end);
         }
     }
 
@@ -87,6 +97,9 @@ class FetchAbsencesCommand
         $startDateObj = new \DateTime($startDate);
         $endDateObj = new \DateTime($endDate);
         $headerText = " Absences from " . $startDateObj->format('d.m.Y') . " to " . $endDateObj->format('d.m.Y') . " ";
+        if ($this->args->getFirstName() && $this->args->getLastName()) {
+            $headerText = " Absences for " . $this->args->getFirstName() . " " . $this->args->getLastName() . $headerText;
+        }
         $padding = str_repeat('═', (int)(($termWidth - strlen($headerText)) / 2));
 
         echo PHP_EOL;

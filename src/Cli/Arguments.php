@@ -8,6 +8,9 @@ class Arguments
     private string $startDate;
     private string $endDate;
 
+    private ?string $firstName = null;
+    private ?string $lastName = null;
+
     public function __construct(array $args)
     {
         $this->args = $args;
@@ -36,6 +39,17 @@ class Arguments
             $this->endDate = $this->args[2];
         }
 
+        // Parse optional flags
+        for ($i = 1; $i < count($this->args); $i++) {
+            if ($this->args[$i] === '--first-name' && isset($this->args[$i+1])) {
+                $this->firstName = $this->args[$i+1];
+                $i++;
+            } elseif ($this->args[$i] === '--last-name' && isset($this->args[$i+1])) {
+                $this->lastName = $this->args[$i+1];
+                $i++;
+            }
+        }
+
         // Validate date formats
         $this->validateDates();
     }
@@ -53,7 +67,10 @@ class Arguments
     {
         echo "Usage: php fetch_absences.php [start_date] [end_date]\n";
         echo "Dates should be in YYYY-MM-DD format\n";
-        echo "Example: php fetch_absences.php 2025-07-10 2025-07-15\n";
+        echo "Options:\n";
+        echo "  --first-name <first>   First name to filter absences by\n";
+        echo "  --last-name <last>     Last name to filter absences by\n";
+        echo "Example: php fetch_absences.php 2025-07-10 2025-07-15 --first-name Max --last-name Mustermann\n";
     }
 
     public function getStartDate(): string
@@ -64,5 +81,15 @@ class Arguments
     public function getEndDate(): string
     {
         return $this->endDate;
+    }
+
+    public function getFirstName(): ?string
+    {
+        return $this->firstName;
+    }
+
+    public function getLastName(): ?string
+    {
+        return $this->lastName;
     }
 } 

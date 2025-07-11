@@ -37,6 +37,53 @@ class AbsenceClient
         return $response['data'] ?? [];
     }
 
+    public function fetchUserIdsByName(string $firstName, string $lastName): array
+    {
+        $payload = [
+            'skip' => 0,
+            'limit' => 50,
+            'filter' => [
+                'firstName' => $firstName,
+                'lastName' => $lastName,
+            ]
+        ];
+
+        $response = $this->makeRequest('/users', 'POST', $payload);
+
+        $ids = [];
+        foreach ($response['data'] ?? [] as $user) {
+            if (isset($user['_id'])) {
+                $ids[] = $user['_id'];
+            }
+        }
+
+        return $ids;
+    }
+
+    public function fetchAbsencesByName(string $firstName, string $lastName, string $startDate, string $endDate, int $limit = 5000): array
+    {
+        $ids = $this->fetchUserIdsByName($firstName, $lastName);
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        $payload = [
+            'skip'   => 0,
+            'limit'  => $limit,
+            'filter' => [
+                'assignedToId' => ['$in' => $ids],
+                'start' => ['$lte' => $endDate . 'T23:59:59.999Z'],
+                'end'   => ['$gte' => $startDate . 'T00:00:00.000Z'],
+            ],
+            'relations' => ['assignedToId']
+        ];
+
+        $response = $this->makeRequest('/absences', 'POST', $payload);
+
+        return $response['data'] ?? [];
+    }
+
     private function makeRequest(string $endpoint, string $method, array $payload): array
     {
         $body = json_encode($payload, JSON_UNESCAPED_SLASHES);
