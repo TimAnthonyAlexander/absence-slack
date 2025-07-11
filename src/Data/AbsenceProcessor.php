@@ -21,9 +21,9 @@ class AbsenceProcessor
             if (!isset($entry['assignedTo'])) {
                 continue;
             }
-            
+
             $name = $entry['assignedTo']['firstName'] . ' ' . $entry['assignedTo']['lastName'];
-            
+
             // Skip if not in allowed names list
             if (!in_array($name, $this->allowedNames)) {
                 continue;
@@ -47,8 +47,44 @@ class AbsenceProcessor
         return $processedAbsences;
     }
 
-    public function formatAbsence(array $absence): string
+    public function formatAbsence(array $absence, string $requestStart, string $requestEnd): string
     {
-        return "{$absence['name']}: {$absence['start']} to {$absence['end']} ({$absence['daysCount']} days)";
+        $requestStart = new \DateTime($requestStart);
+        $requestEnd = new \DateTime($requestEnd);
+        $startDate = new \DateTime($absence['start']);
+        $endDate = new \DateTime($absence['end']);
+        $startDateFormatted = $startDate->format('d.m.Y');
+        $endDateFormatted = $endDate->modify('-1 day')->format('d.m.Y');
+
+        $return = "{$absence['name']}: {$startDateFormatted} bis {$endDateFormatted}";
+
+        if ($requestStart >= $startDate) {
+            // Calculate how much is left til end date
+            $endDate = new \DateTime($absence['end']);
+
+            $interval = $requestStart->diff($endDate);
+            if ($interval->invert === 0) {
+                $return .= " - " . $interval->format('%a Tage Urlaub übrig');
+
+                if ($interval->days >= 5) {
+                    $return .= " (ganze nächste Woche)";
+                }
+            } else {
+                $return .= " - ended " . $interval->format('%a Tage her');
+            }
+        } else {
+            /*
+            $diff = $startDate->diff($requestEnd);
+
+            if ($diff->invert === 0) {
+                $days = $diff->days + 1; // Include the end date
+                $return .= " - " . $days . " Tage Urlaub";
+            } else {
+                $return .= " - ended " . $diff->format('%a Tage her');
+            }
+            */
+        }
+
+        return $return;
     }
-} 
+}
