@@ -52,11 +52,66 @@ class FetchAbsencesCommand
 
     private function outputResults(array $processedAbsences, string $startDate, string $endDate): void
     {
-        foreach ($processedAbsences as $absence) {
-            echo $this->processor->formatAbsence($absence, $startDate, $endDate) . PHP_EOL;
+        // Define ANSI color codes for prettier output
+        $colors = [
+            'reset' => "\033[0m",
+            'bold' => "\033[1m",
+            'green' => "\033[32m",
+            'yellow' => "\033[33m",
+            'blue' => "\033[34m",
+            'magenta' => "\033[35m",
+            'cyan' => "\033[36m",
+            'white' => "\033[37m",
+            'bg_blue' => "\033[44m",
+        ];
+
+        // Calculate terminal width (default to 80 if not detectable)
+        $termWidth = (int) (`tput cols` ?? 80);
+        
+        // Print header with date range
+        $startDateObj = new \DateTime($startDate);
+        $endDateObj = new \DateTime($endDate);
+        $headerText = " Absences from " . $startDateObj->format('d.m.Y') . " to " . $endDateObj->format('d.m.Y') . " ";
+        $padding = str_repeat('═', (int)(($termWidth - strlen($headerText)) / 2));
+        
+        echo PHP_EOL;
+        echo "{$colors['bold']}{$colors['bg_blue']}{$colors['white']}{$padding}{$headerText}{$padding}{$colors['reset']}" . PHP_EOL . PHP_EOL;
+        
+        if (empty($processedAbsences)) {
+            echo "  {$colors['yellow']}No absences found for this period.{$colors['reset']}" . PHP_EOL . PHP_EOL;
+        } else {
+            // Group absences by person
+            $absencesByPerson = [];
+            foreach ($processedAbsences as $absence) {
+                $personName = $absence['name'];
+                if (!isset($absencesByPerson[$personName])) {
+                    $absencesByPerson[$personName] = [];
+                }
+                $absencesByPerson[$personName][] = $absence;
+            }
+            
+            // Display absences grouped by person
+            foreach ($absencesByPerson as $personName => $absences) {
+                echo "  {$colors['cyan']}■ {$colors['bold']}{$personName}{$colors['reset']}" . PHP_EOL;
+                
+                foreach ($absences as $absence) {
+                    $absenceText = $this->processor->formatAbsence($absence, $startDate, $endDate);
+                    $absenceText = str_replace($personName . ": ", "", $absenceText); // Remove redundant name
+                    
+                    // Highlight important information
+                    $absenceText = preg_replace('/(\d+\.\d+\.\d+)/', "{$colors['green']}$1{$colors['reset']}", $absenceText);
+                    $absenceText = preg_replace('/(\d+ Tage)/', "{$colors['yellow']}$1{$colors['reset']}", $absenceText);
+                    
+                    echo "    {$colors['white']}▪ {$absenceText}{$colors['reset']}" . PHP_EOL;
+                }
+                echo PHP_EOL;
+            }
         }
 
-        echo "Total absences: " . count($processedAbsences) . PHP_EOL;
+        // Print summary footer
+        $footerText = " Total absences: " . count($processedAbsences) . " ";
+        $footerPadding = str_repeat('─', $termWidth - strlen($footerText) - 2);
+        echo "{$colors['bold']}{$footerPadding} {$colors['magenta']}{$footerText}{$colors['reset']}" . PHP_EOL . PHP_EOL;
     }
 }
 
