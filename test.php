@@ -8,6 +8,9 @@ use Dflydev\Hawk\Credentials\Credentials;
 use GuzzleHttp\Client as Guzzle;
 use Dotenv\Dotenv;
 
+// Load allowed names from external file
+$allowedNames = require __DIR__ . '/allowed_names.php';
+
 // Load environment variables from .env file
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
@@ -28,9 +31,9 @@ if ($argc > 1) {
         echo "Example: php test.php 2025-07-10 2025-07-15\n";
         exit(0);
     }
-    
+
     $startDate = $argv[1];
-    
+
     if ($argc > 2) {
         $endDate = $argv[2];
     }
@@ -79,6 +82,8 @@ $data = json_decode($resp->getBody(), true)['data'];
 foreach ($data as $entry) {
     if (!isset($entry['assignedTo'])) continue;
     $name = $entry['assignedTo']['firstName'] . ' ' . $entry['assignedTo']['lastName'];
+    if (!in_array($name, $allowedNames)) continue;
+
     $start = substr($entry['start'], 0, 10);
     $end = substr($entry['end'], 0, 10);
     $days = $entry['daysCount'];

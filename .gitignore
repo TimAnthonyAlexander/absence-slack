@@ -1,7 +1,9 @@
-vendor
+# Ignore vendor directory
+/vendor/
 
-# Environment files
+# Ignore environment variables
 .env
-.env.*
-!.env.example
+
+# Ignore allowed names file
+allowed_names.php
 
