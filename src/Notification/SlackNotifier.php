@@ -28,13 +28,9 @@ class SlackNotifier
             'Content-Length: ' . strlen($jsonPayload)
         ]);
 
-        var_dump($jsonPayload); // Debugging output
-
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-
-        print "Response: $response\n"; // Debugging output
 
         $data = json_decode($response, true);
         return $httpCode === 200 && ($data['ok'] ?? false);
@@ -90,4 +86,3 @@ class SlackNotifier
         return implode("\n", $message);
     }
 }
-
