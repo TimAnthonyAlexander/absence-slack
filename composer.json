@@ -2,7 +2,7 @@
     "name": "tim.alexander/abstest",
     "autoload": {
         "psr-4": {
-            "TimAlexander\\Abstest\\": "src/"
+            "App\\": "src/"
         }
     },
     "authors": [
