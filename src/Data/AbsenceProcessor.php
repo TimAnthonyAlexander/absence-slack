@@ -54,46 +54,62 @@ class AbsenceProcessor
         $requestEndDate = new \DateTime($requestEnd);
         $absenceStartDate = new \DateTime($absence['start']);
         $absenceEndDate = new \DateTime($absence['end']);
-        
+
         // Format the date range for display (end date is exclusive)
         $displayStartDate = $absenceStartDate->format('d.m.Y');
         $displayEndDate = (clone $absenceEndDate)->modify('-1 day')->format('d.m.Y');
-        
-        // Basic absence information
-        $result = sprintf("%s: %s bis %s", $absence['name'], $displayStartDate, $displayEndDate);
-        
-        if ($requestStartDate >= $absenceStartDate) {
-            // Case: Absence has already started by request date
-            // Calculate remaining vacation days
-            $daysRemaining = $requestStartDate->diff($absenceEndDate);
-            
-            if ($daysRemaining->invert === 0) {
-                // Absence is still ongoing
-                $result .= sprintf(" - %s Tage Urlaub übrig", $daysRemaining->format('%a'));
-                
-                if ($daysRemaining->days >= 5) {
-                    $result .= " (ganze nächste Woche)";
+
+        // Check if absence covers the entire requested period (or more)
+        $coversWholePeriod = $absenceStartDate <= $requestStartDate && $absenceEndDate >= $requestEndDate;
+
+        // Check if it's a single day absence
+        $isSingleDay = ($absenceStartDate == $absenceEndDate->modify('-1 day'));
+        if ($isSingleDay) {
+            // Get German weekday
+            $germanWeekdays = [
+                'Monday' => 'Montag',
+                'Tuesday' => 'Dienstag',
+                'Wednesday' => 'Mittwoch',
+                'Thursday' => 'Donnerstag',
+                'Friday' => 'Freitag',
+                'Saturday' => 'Samstag',
+                'Sunday' => 'Sonntag',
+            ];
+            $weekday = $germanWeekdays[$absenceStartDate->format('l')] ?? $absenceStartDate->format('l');
+            $result = sprintf("%s %s: (%s)", $weekday, $absence['name'], $displayStartDate);
+        } elseif ($coversWholePeriod) {
+            // Only show name and 'ganze Woche (bis [end date])', omit date range
+            $result = sprintf("%s: ganze Woche (bis %s)", $absence['name'], $displayEndDate);
+        } else {
+            // Basic absence information
+            $result = sprintf("%s: %s bis %s", $absence['name'], $displayStartDate, $displayEndDate);
+
+            if ($requestStartDate >= $absenceStartDate) {
+                // Case: Absence has already started by request date
+                // Calculate remaining vacation days
+                $daysRemaining = $requestStartDate->diff($absenceEndDate);
+
+                if ($daysRemaining->invert === 0) {
+                    // Absence is still ongoing
+                    $result .= sprintf(" - %s Tage Urlaub übrig", $daysRemaining->format('%a'));
+                } else {
+                    // Absence has already ended
+                    $result .= sprintf(" - ended %s Tage her", $daysRemaining->format('%a'));
                 }
             } else {
-                // Absence has already ended
-                $result .= sprintf(" - ended %s Tage her", $daysRemaining->format('%a'));
-            }
-        } else {
-            // Case: Absence starts after request date
-            // Calculate overlap between absence and request period
-            $overlapStart = $absenceStartDate;
-            $overlapEnd = min($absenceEndDate, $requestEndDate);
-            
-            if ($overlapEnd >= $overlapStart) {
-                // There is an overlap
-                $overlapDays = $overlapStart->diff($overlapEnd)->days;
-                $result .= sprintf(" - %d Tage im angefragten Zeitraum", $overlapDays);
-            } else {
-                // No overlap
-                $result .= " - kein Überlapp mit angefragtem Zeitraum";
+                // Case: Absence starts after request date
+                // Calculate overlap between absence and request period
+                $overlapStart = $absenceStartDate;
+                $overlapEnd = min($absenceEndDate, $requestEndDate);
+
+                if ($overlapEnd >= $overlapStart) {
+                    // There is an overlap
+                    $overlapDays = $overlapStart->diff($overlapEnd)->days + 1;
+                    $result .= sprintf(" - %d Tage", $overlapDays);
+                }
             }
         }
-        
+
         return $result;
     }
 }
