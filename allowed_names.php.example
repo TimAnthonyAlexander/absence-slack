@@ -1,0 +1,10 @@
+<?php
+
+return [
+    // Add your allowed names here as strings in an array
+    // For example:
+    'John Doe',
+    'Jane Smith',
+    'Alex Johnson',
+    // 'Your Name',
+]; 
